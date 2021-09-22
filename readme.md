@@ -17,6 +17,7 @@ L'interface est une ébauche. L'intégration sera probablement meilleure dans le
 - Dans votre navigateur aller dans l'inspecteur puis sources > snippets
 - Cliquer sur ajouter un snippet
 - Coller le contenu du fichier snippet.js dans la zone prévue à cet effet
+- Configurer settings si necessaire en s'appuyant sur les commentaires
 
 ## Démarrage
 
