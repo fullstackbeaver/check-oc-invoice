@@ -225,6 +225,17 @@ class Interpreter {
   }
 
   /**
+   * assure la liasion
+   *
+   * @param   {String}  student  [student description]
+   *
+   * @return  {String}           retourne une apostrophe ou un e
+   */
+  apostrophe(student){
+    return ["A","E","I","O","U","Y"].indexOf(student.slice(0,1)) === -1 ? "e " : "'";
+  }
+
+  /**
    * catégorise les séances
    *
    * @param   {seance}  seance  [seance description]
@@ -297,7 +308,7 @@ class Interpreter {
   async statutEleve(eleve, link) {
     if (this.eleves[eleve] === undefined) {
       try{
-        const ref = ui.addMessage("récupère le financement de "+eleve);
+        const ref = ui.addMessage("récupère le financement d"+this.apostrophe(eleve)+eleve);
         this.eleves[eleve] = await extractor.extractStudentFunding(link);
         ui.taskFinished(ref);
       }
