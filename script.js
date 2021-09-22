@@ -174,7 +174,7 @@ class Interpreter {
         this.nSeances++;
         this.ajouteJourTravaille(seance.date);
         await this.definirFinancement(seance);
-        this.temps += seance.financement !== "Financé par un tiers" ? 0.5 : 1;
+        this.temps += seance.financement === "Auto-financé" ? 0.5 : 1;
         this.definirTarif(seance);
         this.addToCategory(seance);
       };
@@ -260,7 +260,7 @@ class Interpreter {
   async definirFinancement(seance){
     if (seance.type === "Soutenance") {
       this.soutenances++;
-      seance.financement = "Financé par un tiers";
+      seance.financement = "Soutenance";
       return;
     }
     try{
