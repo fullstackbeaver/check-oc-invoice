@@ -43,9 +43,9 @@
   }
 
   extractList() {
-    const list = document.querySelectorAll(this.domSrc);
-    this.data = [];
-    this.state = 1;
+    const list    = document.querySelectorAll(this.domSrc);
+    this.data     = [];
+    this.state    = 1;
     let newLine;
     for (let i = 0, size= list.length; i < size; i++) {
       if (this.state === 3) break;
@@ -69,12 +69,12 @@
    */
   async extractStudentFunding(src){
     try {
-      const data = await fetch(src);
-      let funding = await data.text();
-      let start = funding.indexOf("mentorshipStudent__details");
-      funding = funding.slice(start, start+100);
-      funding = funding.slice(funding.indexOf("<p>")+4, funding.indexOf("</p>")-1);
-      funding = funding.replace(/\n/g, '');
+      const data    = await fetch(src);
+      let funding   = await data.text();
+      let start     = funding.indexOf("mentorshipStudent__details");
+      funding       = funding.slice(start, start+100);
+      funding       = funding.slice(funding.indexOf("<p>")+4, funding.indexOf("</p>")-1);
+      funding       = funding.replace(/\n/g, '').trim();
       return funding;
     } catch (error) {
       throw error;
@@ -112,18 +112,17 @@
 }
 
 class Interpreter {
-  annulees = 0;
-  eleves = {};
-  elevesAutofinances = [];
-  forfaits = 0;
-  joursTravailles = [];
-  // montantForfait = 0;
-  nSeances = 0;
-  noShows = 0;
-  seances = {};
-  soutenances = 0;
-  temps = 0;
-  total = 0;
+  annulees              = 0;
+  eleves                = {};
+  elevesAutofinances    = [];
+  forfaits              = 0;
+  joursTravailles       = [];
+  nSeances              = 0;
+  noShows               = 0;
+  seances               = {};
+  soutenances           = 0;
+  temps                 = 0;
+  total                 = 0;
   tarification;
 
   /**
@@ -179,10 +178,10 @@ class Interpreter {
         this.definirTarif(seance);
         this.addToCategory(seance);
       };
-      this.elevesAutofinances = [...new Set(this.elevesAutofinances)];
-      this.forfaits = this.elevesAutofinances.length;
-      this.montantForfait = this.forfaits*this.tarification.forfait;
-      this.temps += this.forfaits;
+      this.elevesAutofinances   = [...new Set(this.elevesAutofinances)];
+      this.forfaits             = this.elevesAutofinances.length;
+      this.montantForfait       = this.forfaits*this.tarification.forfait;
+      this.temps                += this.forfaits;
       extractor.update(this.eleves);
       this.showResults();
     }
@@ -210,7 +209,7 @@ class Interpreter {
     ui.addMessage(`temps passé : ${this.temps} heure${this.pluriel(this.temps)}`);
     ui.addMessage("taux horaire "+ Math.round((chiffreAffaire) / this.temps * 100) / 100+ " €HT");
     ui.addMessage("facturation : "+ chiffreAffaire + " €HT");
-    ui.addMessage("salaire :"+ this.calculSalaire(chiffreAffaire) + "€");
+    ui.addMessage("salaire : "+ this.calculSalaire(chiffreAffaire) + "€");
     this.previsionnelSalaire();
   }
 
@@ -316,17 +315,17 @@ class Interpreter {
 
   previsionnelSalaire() {
 
-    const annee = new Date().getFullYear();
-    const idMois = new Date().getMonth();
+    const annee   = new Date().getFullYear();
+    const idMois  = new Date().getMonth();
     const moisTxt = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
     const refDate = this.joursTravailles[this.joursTravailles.length - 1];
 
     if (refDate.indexOf(moisTxt) === -1) return;
     if (parseInt(refDate.split(" ")[2]) !== annee) return;
 
-    const joursDansLeMois = new Date(idMois, annee, 0).getDate();
-    const joursOuvres = this.getOpenedDays(annee, idMois, joursDansLeMois);
-    const joursOuvresTravailles = this.getOpenedDays(annee, idMois, new Date().getDate());
+    const joursDansLeMois         = new Date(idMois, annee, 0).getDate();
+    const joursOuvres             = this.getOpenedDays(annee, idMois, joursDansLeMois);
+    const joursOuvresTravailles   = this.getOpenedDays(annee, idMois, new Date().getDate());
 
     if (joursOuvres === joursOuvresTravailles) return;
 
@@ -423,16 +422,15 @@ class UI {
    * @return  {HTMLElement}       [return description]
    */
   addMessage(msg) {
-    const ref = document.createElement("div");
-    ref.innerHTML = msg;
+    const ref       = document.createElement("div");
+    ref.innerHTML   = msg;
     this.DOM.appendChild(ref);
     return ref;
   }
 
   launch() {
     this.DOM.innerText = "";
-    // this.addMessage("l'extraction a commencé");
-    const data = extractor.extractList();
+    const data    = extractor.extractList();
     const pluriel = interpreter.pluriel(data.seances.length);
     this.addMessage(`l'extraction achevée : ${data.seances.length} seance${pluriel} planififée${pluriel}`);
     interpreter.readData(data);
