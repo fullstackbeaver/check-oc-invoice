@@ -282,7 +282,7 @@ class Interpreter {
    */
   definirTarif(seance){
     seance.tarif = this.tarification["niveau"+seance.niveau];
-    if(seance.financement !== "Financé par un tiers") {
+    if(seance.financement === "Auto-financé") {
       this.elevesAutofinances.push(seance.eleve);
       seance.tarif = seance.tarif / 2;
     }
