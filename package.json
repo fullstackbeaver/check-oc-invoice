@@ -1,10 +1,10 @@
 {
   "name": "check-oc-invoice",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.0",
+  "description": "a snippet that summarizes the sessions in order to check what openclassrooms offers",
+  "main": "snippet.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "minify": "npx gulp compress"
   },
   "repository": {
     "type": "git",
@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/fullstackbeaver/check-oc-invoice/issues"
   },
-  "homepage": "https://github.com/fullstackbeaver/check-oc-invoice#readme"
+  "homepage": "https://github.com/fullstackbeaver/check-oc-invoice#readme",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-minify": "^3.1.0"
+  }
 }
