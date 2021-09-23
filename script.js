@@ -1,5 +1,3 @@
-/* global extractor */
-
 /**
  * @typedef  {Object}                                       seance
  * @property {String}                                       date
@@ -47,6 +45,9 @@
     this.data     = [];
     this.state    = 1;
     let newLine;
+
+    //TODO : changer les state pour ajouter l'autoscroll
+
     for (let i = 0, size= list.length; i < size; i++) {
       if (this.state === 3) break;
       // @ts-ignore
@@ -377,6 +378,9 @@ class UI {
       align-items: flex-start;
       box-shadow: 0 0 10px var(--oc_color);
     }
+    .mentorTools a{
+      text-decoration: none;
+    }
     .mentorTools b{
       color : var(--oc_color);
     }
@@ -394,6 +398,7 @@ class UI {
     }
     .mentorTools svg{
         width:24px;
+        cursor:pointer;
     }
   `;
 
@@ -439,8 +444,19 @@ class UI {
     return ref;
   }
 
+  checkPage(){
+    const lang =  window.location.pathname.slice(0,3);
+    const target = "/mentorship/dashboard/mentorship-sessions-history";
+    if (window.location.pathname.slice(3) !== target){
+      this.addMessage(`<a href="${lang+target}"><h1>ce n'est pas la bonne page</h1>aller à la page historique</a>`)
+      return false;
+    }
+    return true;
+  }
+
   launch() {
     this.DOM.innerText = "";
+    if(!this.checkPage()) return;
     const data    = extractor.extractList();
     const pluriel = interpreter.pluriel(data.seances.length);
     this.addMessage(`l'extraction achevée : ${data.seances.length} seance${pluriel} planififée${pluriel}`);
