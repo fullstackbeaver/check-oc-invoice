@@ -1,5 +1,5 @@
 # Check OC Invoice
-[![forthebadge](https://forthebadge.com/images/badges/made-with-javascript.svg)](https://forthebadge.com)
+
 
 Un snippet qui récapitule les séances afin de vérifier ce que propose openclassrooms pour la facturation.
 
@@ -21,8 +21,7 @@ L'interface est une ébauche. L'intégration sera probablement meilleure dans le
 
 ## Démarrage
 
-- Aller sur votre tableau de bord de mentor.
-- Cliquer sur afficher plus afin de voir toutes les séances du mois. Si les séances du mois précédent apparaissent cela n'a pas d'incidence.
+- Aller sur votre tableau de bord de mentor. et choisir "historique"
 - Ouvrir l'inspecteur > sources > snippets
 - Lancer le snippet (clique droit puis run).
 - Si vous n'avez pas décommenté la ligne ui.launch() il faudra ensuite cliquer sur le bouton de l'interface
@@ -41,7 +40,7 @@ Si vous désirez avoir plus ample informations sur les séances afin de vérifie
 ## Versions
 
 **Dernière version stable :** aucune
-**Dernière version :** 0.1.0
+**Dernière version :** 0.2.0
 
 ## License
 
