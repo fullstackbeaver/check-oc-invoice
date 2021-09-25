@@ -1,34 +1,28 @@
 /**
- * @typedef  {Object}                                       seance
- * @property {String}                                       date
- * @property {String}                                       eleve
- * @property {String}                                       [financement]
- * @property {String}                                       link
- * @property {Number|null}                                  niveau
- * @property {("StudentAbsent" | "Completed" | "Canceled")} realise
- * @property {Number}                                       [tarif]
- * @property {String}                                       type
+ * @typedef  {import("./typedef.js").eleveFinancement} eleveFinancement
+ * @typedef  {import("./typedef.js").seance}           seance
+ * @typedef  {import("./typedef.js").tarification}     tarification
  */
-
-/**
- * @typedef {("Auto-financé" |  "Financé par un tiers")} eleveFinancement
- */
-
 
  class Extractor {
 
   /**
    * les données extraites de la page
    */
-  data = [];
+  data                = [];
+  firstEntry          = 0;
+  lastEntry           = 0;
+  mutationObserver    = new MutationObserver(this.extractData.bind(this));
+  rawData             = [];
+  seeMoreBtn;
+  skipNextTitle;
 
   /**
    * l'étape d'extraction
    * @type {Number}
    * 0: l'extraction n'a pas commencé
-   * 1: l'extraction a commencé
-   * 2: un premier titre à été trouvé
-   * 3: l'extraction est finie
+   * 1: le début du mois à relever est trouvé : l'extraction a commencé
+   * 2: la fin du mois à relever est trouvée
    */
   state = 0;
   /**
@@ -36,27 +30,56 @@
    *
    * @param   {String}  domSrc  la référence de l'élément à importer
    */
-  constructor(domSrc) {
-    this.domSrc = domSrc;
+  constructor(domSrc, seeMoreBtn) {
+    this.domSrc       = domSrc;
+    this.seeMoreBtn   =seeMoreBtn;
   }
 
-  extractList() {
-    const list    = document.querySelectorAll(this.domSrc);
-    this.data     = [];
-    this.state    = 1;
-    let newLine;
-
-    //TODO : changer les state pour ajouter l'autoscroll
-
-    for (let i = 0, size= list.length; i < size; i++) {
-      if (this.state === 3) break;
-      // @ts-ignore
-      newLine = this.newLine(list[i]);
-      if (newLine) this.data.push(newLine);
+  checkPage(){
+    const lang   = window.location.pathname.slice(0,3);
+    const target = "/mentorship/dashboard/mentorship-sessions-history";
+    if (window.location.pathname.slice(3) !== target){
+      ui.addMessage(`<a href="${lang+target}"><h1>ce n'est pas la bonne page</h1>aller à la page historique</a>`)
+      return false;
     }
-    return {
-      eleves  : JSON.parse(localStorage.getItem("eleves")),
-      seances : this.data
+    return true;
+  }
+
+  extractData() {
+    window.scrollTo(0, document.body.scrollHeight);
+    const list = document.querySelectorAll(this.domSrc);
+    let newLine;
+    for (let i=this.currentItem, size=list.length; i<size; i++){
+      // @ts-ignore
+      if (list[i].innerText.length <= 20) {
+        this.state++;
+        if (this.state === 2) {
+          this.mutationObserver.disconnect();
+          const pluriel = interpreter.pluriel(this.data.length);
+          ui.addMessage(`l'extraction achevée : ${this.data.length} seance${pluriel} planififée${pluriel}`);
+          interpreter.readData({
+            eleves  : JSON.parse(localStorage.getItem("eleves")),
+            seances : this.data
+          });
+          return;
+        }
+        if (this.state === 1) {
+          ui.addMessage("l'extraction commence");
+          continue;
+        }
+      }
+      if (this.state === 1) {
+        this.currentItem = i;
+        newLine = this.newLine(list[i]);
+        if (newLine) this.data.push(newLine);
+      }
+      
+    }
+    const btns = document.querySelectorAll(this.seeMoreBtn);
+    const seeMoreBtn = btns[btns.length - 1];    
+    if (seeMoreBtn !== undefined) {
+      ui.addMessage("nouvelle requête pour avoir plus de séances")
+      seeMoreBtn.click();
     }
   }
 
@@ -90,11 +113,6 @@
    * @return  {seance | void}        [return description]
    */
   newLine(node) {
-    const content = node.innerText;
-    if (content.length <= 20) {
-      this.state++;
-      return;
-    }
     const list = node.querySelectorAll("div");
     return {
       date    : list[3].innerText,
@@ -105,6 +123,16 @@
       // @ts-ignore
       realise : list[0].querySelector("svg").getAttribute("data-name").slice(0,-4)
     }
+  }
+  
+  startSearch(previous){
+    this.currentItem    = 1;
+    this.skipNextTitle  = previous;
+    this.rawData        = [];
+    this.state          = previous ? 0 : 1;
+    this.mutationObserver.observe(document.querySelector("#mainContent"),{childList: true, subtree: true});
+    ui.addMessage("recherche du début du mois sélectionné");
+    this.extractData();
   }
 
   update(eleves){
@@ -129,12 +157,7 @@ class Interpreter {
   /**
    * [constructor description]
    *
-   * @param   {Object}  tarification
-   * @param   {Number}  tarification.forfait
-   * @param   {Number}  tarification.niveau1
-   * @param   {Number}  tarification.niveau2
-   * @param   {Number}  tarification.niveau3
-   * @param   {Number}  tarification.tauxCotisation 
+   * @param   {tarification}  tarification
    */
   constructor(tarification) {
     this.tarification = tarification;
@@ -156,8 +179,8 @@ class Interpreter {
   /**
    * [readData description]
    *
-   * @param   {Object}  releve  [releve description]
-   * @param   {Object}  releve.eleves
+   * @param   {Object}           releve  [releve description]
+   * @param   {Object}           releve.eleves
    * @param   {Array.<seance>}   releve.seances
    *
    * @return  {Promise.<void>}          [return description]
@@ -196,6 +219,7 @@ class Interpreter {
     const chiffreAffaire    = this.total+this.montantForfait;
     const prestations       = [];
     let pluriel;
+    ui.clear();
     for (const key of Object.keys(this.seances)) {
       prestations.push(key);
     }
@@ -272,7 +296,6 @@ class Interpreter {
       throw err;
     }
   }
-  
 
   /**
    * ajoute le tarif de la séance
@@ -397,21 +420,61 @@ class UI {
       border-bottom: 1px dashed;
     }
     .mentorTools svg{
-        width:24px;
-        cursor:pointer;
+      width:24px;
+      cursor:pointer;
     }
   `;
 
   /**
    * [constructor description]
    *
-   * @param   {HTMLElement}  domTarget  [domTarget description]
+   * @param   {HTMLElement}  domTarget  le noeud HTML où sera injecté l'outil
    */
-  constructor(domTarget) {
+  constructor(domTarget, lang) {
     console.clear(); 
-    this.DOM = document.querySelector(".mentorTools resume");
+    this.DOM    = document.querySelector(".mentorTools resume");
+    this.lang   = lang;
     if (this.DOM === null) this.initInterface(domTarget);
-    this.DOM.innerHTML = '<button onclick="ui.launch()"> extraire les données</button>';
+    this.addMessage(`<button onclick="ui.launch(false)"> extraire les données de ${this.getMonth(false)}</button>`);
+    if(new Date().getDate() < 15) {
+      this.addMessage(`<button onclick="ui.launch(true)"> extraire les données de ${this.getMonth(true)}</button>`);
+    }
+  }
+
+  /**
+   * ajoute un message dans le DOM
+   *
+   * @param   {String}  msg  le message à ajouter (au format HTML si besoin)
+   *
+   * @return  {HTMLElement}  une référence du noeud HTML qui vient d'être ajouté
+   */
+  addMessage(msg) {
+    const ref       = document.createElement("div");
+    ref.innerHTML   = msg;
+    this.DOM.appendChild(ref);
+    return ref;
+  }
+
+  clear(){
+    this.DOM.innerText = "";
+  }
+
+  close(){
+    const target = document.querySelector(".mentorTools");
+    target.parentNode.removeChild(target);
+  }
+
+  /**
+   * [showMonth description]
+   *
+   * @param   {Boolean}  previous  true le mois précédent false le mois courrant
+   *
+   * @return  {String}            [return description]
+   */
+  getMonth(previous){
+    const date = new Date();
+    if (previous) date.setMonth(date.getMonth() -1);
+    return date.toLocaleString('default', { month: 'long' });
   }
 
   initInterface(domTarget) {
@@ -431,41 +494,16 @@ class UI {
   }
 
   /**
-   * [addMessage description]
+   * [launch description]
    *
-   * @param   {String}  msg  [msg description]
+   * @param   {Boolean}  previous  true le mois précédent false le mois courrant
    *
-   * @return  {HTMLElement}       [return description]
+   * @return  {void}            [return description]
    */
-  addMessage(msg) {
-    const ref       = document.createElement("div");
-    ref.innerHTML   = msg;
-    this.DOM.appendChild(ref);
-    return ref;
-  }
-
-  checkPage(){
-    const lang =  window.location.pathname.slice(0,3);
-    const target = "/mentorship/dashboard/mentorship-sessions-history";
-    if (window.location.pathname.slice(3) !== target){
-      this.addMessage(`<a href="${lang+target}"><h1>ce n'est pas la bonne page</h1>aller à la page historique</a>`)
-      return false;
-    }
-    return true;
-  }
-
-  launch() {
-    this.DOM.innerText = "";
-    if(!this.checkPage()) return;
-    const data    = extractor.extractList();
-    const pluriel = interpreter.pluriel(data.seances.length);
-    this.addMessage(`l'extraction achevée : ${data.seances.length} seance${pluriel} planififée${pluriel}`);
-    interpreter.readData(data);
-  }
-
-  close(){
-    const target = document.querySelector(".mentorTools");
-    target.parentNode.removeChild(target);
+  launch(previous) {
+    this.clear();
+    if(!extractor.checkPage()) return;
+    extractor.startSearch(previous);
   }
 
   /**

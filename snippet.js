@@ -1,8 +1,6 @@
 //code to copy inside the chrome's snippet section ()
 const settings = {
   "autoLaunch"    : false,                     // passer à pour lancer automatiquement l'extraction des séances
-  "domSource"     : "#mainContent section li", // élément du DOM où sont affichés les séances effectuées dans le mois
-  "domTarget"     : document.body,             // changer pour placer l'outil dans un autre élément du DOM
   "tarification": {
     forfait           : 30,                    // forfait attribué à chanque étudiant auto-financé
     niveau1           : 30,                    // montant en € d'une séance de niveau 1
@@ -19,9 +17,9 @@ async function load() {
   document.head.appendChild(script_tag);
   script_tag.type   = 'text/javascript';
   script_tag.text   = await scripts.text();
-  extractor         = new Extractor(settings.domSource);
-  interpreter       = new Interpreter(settings.tarification);
-  ui                = new UI(settings.domTarget);
-  if (settings.autoLaunch) ui.launch();
+  extractor         = new Extractor   ("#mainContent section li", "#mainContent button");
+  interpreter       = new Interpreter (settings.tarification);
+  ui                = new UI          (document.body, settings.lang);
+  if (settings.autoLaunch) ui.launch(false);
 }
 load();
