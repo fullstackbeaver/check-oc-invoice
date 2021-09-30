@@ -1,0 +1,1 @@
+var extractor = new Extractor("#mainContent section li", "#mainContent button");

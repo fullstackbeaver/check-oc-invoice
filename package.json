@@ -4,7 +4,9 @@
   "description": "a snippet that summarizes the sessions in order to check what openclassrooms offers",
   "main": "snippet.js",
   "scripts": {
-    "minify": "npx gulp compress"
+    "aggregate": "npx gulp aggregate",
+    "minify": "npx gulp compress",
+    "watch": "npx gulp watch"
   },
   "repository": {
     "type": "git",
@@ -17,7 +19,11 @@
   },
   "homepage": "https://github.com/fullstackbeaver/check-oc-invoice#readme",
   "devDependencies": {
+    "eslint": "^7.32.0",
     "gulp": "^4.0.2",
-    "gulp-minify": "^3.1.0"
+    "gulp-concat": "^2.6.1",
+    "gulp-live-server": "0.0.31",
+    "gulp-strip-comments": "^2.5.2",
+    "gulp-uglify": "^3.0.2"
   }
 }

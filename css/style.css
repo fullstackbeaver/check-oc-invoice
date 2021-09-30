@@ -1,0 +1,46 @@
+:root {
+  --oc_color: #7451eb;
+}
+
+.mentorTools {
+  align-items         : flex-start;
+  background-color    : rgba(255, 255, 255, .9);
+  box-shadow          : 0 0 10px var(--oc_color);
+  display             : flex;
+  padding             : 1rem;
+  position            : fixed;
+  top                 : 0;
+  z-index             : 100;
+}
+
+.mentorTools a {
+  text-decoration: none;
+}
+
+.mentorTools div {
+  padding: .2rem;
+}
+
+.mentorTools resume {
+  max-height    : 50vh;
+  overflow-y    : scroll;
+}
+
+.mentorTools span {
+  border-bottom   : 1px dashed;
+  display         : inline-block;
+  width           : 2rem;
+}
+
+.mentorTools svg {
+  cursor    : pointer;
+  width     : 24px;
+}
+
+.mentorTools [data-content]::before {
+  color         : var(--oc_color);
+  content       : attr(data-content);
+  display       : inline-block;
+  font-weight   : bold;
+  width         : 1.5rem;
+}

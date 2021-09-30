@@ -1,0 +1,133 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "indent": [
+      "warn",
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "quotes": [
+      "error",
+      "double"
+    ],
+    "no-unused-vars": "warn",
+    "no-else-return": [
+      "warn",
+      {
+        "allowElseIf": true
+      }
+    ],
+    "no-delete-var": [
+      "off"
+    ],
+    "linebreak-style": [
+      "warn",
+      "windows"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "complexity": [
+      "error",
+      2
+    ],
+    "prefer-const": [
+      "warn",
+      {
+        "destructuring": "any",
+        "ignoreReadBeforeAssign": false
+      }
+    ],
+    "camelcase": [
+      "warn"
+    ],
+    "eqeqeq": [
+      "warn",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
+    "no-eval": [
+      "error"
+    ],
+    "key-spacing": [
+      "warn"
+    ],
+    "keyword-spacing": [
+      "warn"
+    ],
+    "arrow-spacing": [
+      "warn"
+    ],
+    "no-constructor-return": [
+      "warn"
+    ],
+    "no-extra-bind": [
+      "warn"
+    ],
+    "no-implicit-coercion": [
+      "warn"
+    ],
+    "generator-star-spacing": [
+      "warn"
+    ],
+    "no-useless-constructor": [
+      "warn"
+    ],
+    "sort-imports": [
+      "warn"
+    ],
+    "sort-keys": [
+      "warn"
+    ],
+    "no-trailing-spaces": [
+      "warn"
+    ],
+    "no-multiple-empty-lines": [
+      "error",
+      {
+        "max": 1,
+        "maxEOF": 0
+      }
+    ],
+    "new-cap": [
+      "error",
+      {
+        "newIsCap": true
+      }
+    ],
+    "max-lines-per-function": [
+      "warn",
+      20
+    ],
+    "multiline-ternary": [
+      "error",
+      "always-multiline"
+    ],
+    "lines-between-class-members": [
+      "error",
+      "always"
+    ],
+    "no-useless-catch" : ["off"]
+  }
+}

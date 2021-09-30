@@ -1,25 +1,24 @@
 //code to copy inside the chrome's snippet section ()
 const settings = {
-  "autoLaunch"    : false,                     // passer à pour lancer automatiquement l'extraction des séances
+  "autoLaunch": false,                       // passer à pour lancer automatiquement l'extraction des séances
+  "local": true,                        // utilie le script en local ou celui sur github pages
   "tarification": {
-    forfait           : 30,                    // forfait attribué à chanque étudiant auto-financé
-    niveau1           : 30,                    // montant en € d'une séance de niveau 1
-    niveau2           : 35,                    // montant en € d'une séance de niveau 2
-    niveau3           : 40,                    // montant en € d'une séance de niveau 3
-    tauxCotisation    : .264,                  // ce taux correspond à celui d'un autoentrepreneur avec le prélèvement libératoire (26,4%)
+    forfait: 30,                    // forfait attribué à chanque étudiant auto-financé
+    niveau1: 30,                    // montant en € d'une séance de niveau 1
+    niveau2: 35,                    // montant en € d'une séance de niveau 2
+    niveau3: 40,                    // montant en € d'une séance de niveau 3
+    tauxCotisation: .264,                  // ce taux correspond à celui d'un autoentrepreneur avec le prélèvement libératoire (26,4%)
   }
-}
+};
+const src = settings.local ? 
+  "http://localhost:8888" : 
+  "https://fullstackbeaver.github.io/check-oc-invoice";
 
-var extractor, interpreter, ui;
-async function load() {
-  const scripts     = await fetch("https://fullstackbeaver.github.io/check-oc-invoice/script.js");
-  const script_tag  = document.createElement('script');
+insertScript(`${src}/scripts/script${settings.local ? "" : "-min"}.js`);
+
+function insertScript(src){
+  const script_tag    = document.createElement("script");
+  script_tag.type     = "text/javascript";
+  script_tag.src      = src;
   document.head.appendChild(script_tag);
-  script_tag.type   = 'text/javascript';
-  script_tag.text   = await scripts.text();
-  extractor         = new Extractor   ("#mainContent section li", "#mainContent button");
-  interpreter       = new Interpreter (settings.tarification);
-  ui                = new UI          (document.body, settings.lang);
-  if (settings.autoLaunch) ui.launch(false);
 }
-load();
