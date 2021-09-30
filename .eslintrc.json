@@ -48,7 +48,7 @@
     ],
     "complexity": [
       "error",
-      2
+      5
     ],
     "prefer-const": [
       "warn",

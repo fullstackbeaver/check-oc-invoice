@@ -105,12 +105,15 @@ var extractor = new Extractor("#mainContent section li", "#mainContent button");
 class UI {
 
   constructor(domTarget, src) {
-    console.clear(); 
+    console.clear();
     console.log("src:",src);
 
     this.DOM    = document.querySelector(".mentorTools resume");
     if (this.DOM === null) this.initInterface(domTarget, src);
     this.addMessage(`<button onclick="ui.launch(false)"> extraire les données de ${this.getMonth(false)}</button>`);
+    if (new Date().getDate() < 15) {
+      this.addMessage(`<button onclick="ui.launch(true)"> extraire les données de ${this.getMonth(true)}</button>`);
+    }
   }
 
   addMessage(msg, prefix=false) {
@@ -158,7 +161,7 @@ class UI {
 
   launch(previous) {
     this.clear();
-    if(!extractor.checkPage()) return;
+    if (!extractor.checkPage()) return;
     extractor.startSearch(previous);
   }
 
