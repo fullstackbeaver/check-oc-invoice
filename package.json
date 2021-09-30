@@ -1,6 +1,6 @@
 {
   "name": "check-oc-invoice",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "a snippet that summarizes the sessions in order to check what openclassrooms offers",
   "main": "snippet.js",
   "scripts": {

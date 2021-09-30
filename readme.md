@@ -1,6 +1,5 @@
 # Check OC Invoice
 
-
 Un snippet qui récapitule les séances afin de vérifier ce que propose openclassrooms pour la facturation.
 
 ## Avancement
@@ -21,10 +20,10 @@ L'interface est une ébauche. L'intégration sera probablement meilleure dans le
 
 ## Démarrage
 
-- Aller sur votre tableau de bord de mentor. et choisir "historique"
+- Aller sur votre tableau de bord de mentor et choisir "historique"
 - Ouvrir l'inspecteur > sources > snippets
 - Lancer le snippet (clique droit puis run).
-- Si vous n'avez pas décommenté la ligne ui.launch() il faudra ensuite cliquer sur le bouton de l'interface
+- Si vous n'avez pas mis sur true `autoLaunch` dans settings il faudra ensuite cliquer sur le bouton de l'interface
 
 ### Avoir plus des informations détaillés sur les séances
 
@@ -36,11 +35,32 @@ Si vous désirez avoir plus ample informations sur les séances afin de vérifie
 ## Contributing
 
 - Si vous souhaitez contribuer, contactez-moi.
+- Les issues sont ouvertes si vous rencontrez un bug
 
 ## Versions
 
 **Dernière version stable :** aucune
-**Dernière version :** 0.2.0
+**Dernière version :** 0.3.0
+
+version 0.3.0 : 
+
+* ajout d'un autoscroll pour récupérer toutes les séances
+* mis en place d'un outil pour générer le script au format standard (sans commentaires) et minimifié
+* ajout d'un serveur pour avoir une version sans aller chercher le script sur github pages
+
+version 0.2.0 : 
+
+* corrige quelques bugs
+* vérification que l'on est sur la page historique
+
+version 0.1.0 :
+
+* version initiale
+
+## Roadmap
+
+* ajout d'une interface en cas d'élève qui n'a plus de financement
+* ajout d'un système d'extension afin de se connecter à l'API d'un logiciel de comptabilité
 
 ## License
 
