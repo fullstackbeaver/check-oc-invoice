@@ -1,4 +1,9 @@
 /* global ui, interpreter */
+
+/**
+ * @typedef  {import("./typedef.js").seance}           seance
+ */
+
 class Extractor {
 
   /**
@@ -7,15 +12,12 @@ class Extractor {
    * @param   {String}  domSrc  la référence de l'élément à importer
    */
   constructor(domSrc, seeMoreBtn) {
-    this.domSrc = domSrc;
-    this.seeMoreBtn = seeMoreBtn;
-    /**
- * les données extraites de la page
- */
-    this.data = [];
-    this.firstEntry = 0;
-    this.lastEntry = 0;
-    this.mutationObserver = new MutationObserver(this.extractData.bind(this));
+    this.data               = [];
+    this.domSrc             = domSrc;
+    this.firstEntry         = 0;
+    this.lastEntry          = 0;
+    this.mutationObserver   = new MutationObserver(this.extractData.bind(this));
+    this.seeMoreBtn         = seeMoreBtn;
     this.seeMoreBtn;
     this.skipNextTitle;
     /**
@@ -85,9 +87,9 @@ class Extractor {
    */
   async extractStudentFunding(src) {
     try {
-      const data = await fetch(src);
+      const data  = await fetch(src);
       let funding = await data.text();
-      let start = funding.indexOf("mentorshipStudent__details");
+      const start = funding.indexOf("mentorshipStudent__details");
       funding = funding.slice(start, start + 100);
       funding = funding.slice(funding.indexOf("<p>") + 4, funding.indexOf("</p>") - 1);
       funding = funding.replace(/\n/g, "").trim();
@@ -107,13 +109,13 @@ class Extractor {
   newLine(node) {
     const list = node.querySelectorAll("div");
     return {
-      date: list[3].innerText,
-      eleve: list[4].innerText,
-      link: list[4].querySelector("a").href,
-      niveau: list[8] ? parseInt(list[8].innerText) : null,
-      type: list[0].innerText,
+      date    : list[3].innerText,
+      eleve   : list[4].innerText,
+      link    : list[4].querySelector("a").href,
+      niveau  : list[8] ? parseInt(list[8].innerText) : null,
       // @ts-ignore
-      realise: list[0].querySelector("svg").getAttribute("data-name").slice(0, -4)
+      realise : list[0].querySelector("svg").getAttribute("data-name").slice(0, -4),
+      type    : list[0].innerText
     };
   }
 

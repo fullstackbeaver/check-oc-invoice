@@ -1,4 +1,10 @@
 /* global ui, extractor */
+/**
+ * @typedef  {import("./typedef.js").eleveFinancement} eleveFinancement
+ * @typedef  {import("./typedef.js").seance}           seance
+ * @typedef  {import("./typedef.js").tarification}     tarification
+ */
+
 class Interpreter {
 
   /**
@@ -25,7 +31,7 @@ class Interpreter {
     this.temps                    = 0;
     this.total                    = 0;
   }
-  
+
   async readData() {
     this.reset();
     const releve = {
@@ -49,7 +55,7 @@ class Interpreter {
       }
       if (this.manuallyDefineFunding.length > 0) {
         ui.clear();
-        this.manuallyDefineFunding.forEach(eleve =>{
+        this.manuallyDefineFunding.forEach(eleve => {
           ui.addMessage(`${eleve} : <select id="${eleve}"><option value="Auto-financé">Auto-financé</option><option value="Financé par un tiers">Financé par un tiers</option></select>`);
         });
         ui.addMessage("<button onclick=\"interpreter.readData()\">je valide les changements</button>");
@@ -142,11 +148,11 @@ class Interpreter {
       seance.financement = "Soutenance";
       return;
     }
-    try{
+    try {
       seance.financement = await this.statutEleve(seance.eleve, seance.link);
       delete seance.link;
     }
-    catch(err){
+    catch (err){
       throw err;
     }
   }
@@ -160,11 +166,11 @@ class Interpreter {
    */
   definirTarif(seance){
     seance.tarif = this.tarification["niveau"+seance.niveau];
-    if(seance.financement === "Auto-financé") {
+    if (seance.financement === "Auto-financé") {
       this.elevesAutofinances.push(seance.eleve);
       seance.tarif = seance.tarif / 2;
     }
-    if(seance.realise === "StudentAbsent") {
+    if (seance.realise === "StudentAbsent") {
       seance.tarif = seance.tarif / 2;
       this.noShows++;
     }

@@ -48,8 +48,9 @@
     ],
     "complexity": [
       "error",
-      5
+      8
     ],
+    "prefer-spread": ["warn"],
     "prefer-const": [
       "warn",
       {
@@ -70,9 +71,9 @@
     "no-eval": [
       "error"
     ],
-    "key-spacing": [
-      "warn"
-    ],
+    // "key-spacing": [
+    //   "warn"
+    // ],
     "keyword-spacing": [
       "warn"
     ],
@@ -118,7 +119,7 @@
     ],
     "max-lines-per-function": [
       "warn",
-      20
+      40
     ],
     "multiline-ternary": [
       "error",
