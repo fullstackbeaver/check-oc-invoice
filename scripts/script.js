@@ -33,7 +33,6 @@ class Extractor {
     const list = document.querySelectorAll(this.domSrc);
     let newLine;
     for (let i = this.currentItem, size = list.length; i < size; i++) {
-      console.log(i)
       if (list[i].innerText.length <= 20) {
         this.state++;
         if (this.state === 2) {
