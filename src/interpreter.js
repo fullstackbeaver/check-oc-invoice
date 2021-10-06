@@ -17,98 +17,6 @@ class Interpreter {
     this.reset();
   }
 
-  reset(){
-    this.annulees                 = 0;
-    this.eleves                   = {};
-    this.elevesAutofinances       = [];
-    this.forfaits                 = 0;
-    this.joursTravailles          = [];
-    this.manuallyDefineFunding    = [];
-    this.nSeances                 = 0;
-    this.noShows                  = 0;
-    this.seances                  = {};
-    this.soutenances              = 0;
-    this.temps                    = 0;
-    this.total                    = 0;
-  }
-
-  async readData() {
-    this.reset();
-    const releve = {
-      eleves  : JSON.parse(localStorage.getItem("eleves")),
-      seances : extractor.data
-    };
-    this.eleves = releve.eleves === null ? {} : releve.eleves;
-    try {
-      for (const seance of releve.seances) {
-        if (!seance.realise) return;
-        if (seance.realise === "Canceled") {
-          this.annulees++;
-          continue;
-        }
-        this.nSeances++;
-        this.ajouteJourTravaille(seance.date);
-        await this.definirFinancement(seance);
-        this.temps += seance.financement === "Auto-financé" ? 0.5 : 1;
-        this.definirTarif(seance);
-        this.addToCategory(seance);
-      }
-      if (this.manuallyDefineFunding.length > 0) {
-        ui.clear();
-        this.manuallyDefineFunding.forEach(eleve => {
-          ui.addMessage(`${eleve} : <select id="${eleve}"><option value="Auto-financé">Auto-financé</option><option value="Financé par un tiers">Financé par un tiers</option></select>`);
-        });
-        ui.addMessage("<button onclick=\"interpreter.readData()\">je valide les changements</button>");
-        return;
-      }
-      this.elevesAutofinances   = [...new Set(this.elevesAutofinances)];
-      this.forfaits             = this.elevesAutofinances.length;
-      this.montantForfait       = this.forfaits*this.tarification.forfait;
-      this.temps                += this.forfaits;
-      this.showResults();
-    }
-    catch (err) {
-      ui.addMessage("<i>erreur : </i>" + err.stack);
-    }
-  }
-
-  showResults(){
-
-    const chiffreAffaire    = this.total+this.montantForfait;
-    const prestations       = [];
-    const seancesPlanifiees = extractor.data.length;
-    let pluriel             = this.pluriel(seancesPlanifiees);
-    ui.clear();
-    ui.addMessage(`<span>${seancesPlanifiees}</span> x seance${pluriel} planififée${pluriel}<br>. . . . . . . . . . . . . . . . . . .`);
-    for (const key of Object.keys(this.seances)) {
-      prestations.push(key);
-    }
-    prestations.sort();
-    prestations.forEach(presta => {
-      ui.addMessage(`<span>${this.seances[presta].length}</span> x ${presta}`);
-    });
-    pluriel = this.pluriel(this.nSeances);
-    ui.addMessage(`<span>${this.nSeances}</span> séance${pluriel} facturée${pluriel} dont ${this.noShows} no show${this.pluriel(this.noShows)} : ${this.total} €HT`);
-    pluriel = this.pluriel(this.forfaits);
-    ui.addMessage(`<span>${this.forfaits}</span> x forfait${pluriel} auto-financé : ${this.montantForfait} €HT`);
-    ui.addMessage(`temps passé : ${this.temps} heure${this.pluriel(this.temps)}`);
-    ui.addMessage("taux horaire "+ Math.round((chiffreAffaire) / this.temps * 100) / 100+ " €HT");
-    ui.addMessage("facturation : "+ chiffreAffaire + " €HT");
-    ui.addMessage("salaire : "+ this.calculSalaire(chiffreAffaire) + "€");
-    this.previsionnelSalaire();
-  }
-
-  /**
-   * [pluriel description]
-   *
-   * @param   {Number}  qty  [qty description]
-   *
-   * @return  {String}       [return description]
-   */
-  pluriel(qty){
-    return qty > 1 ? "s" : "";
-  }
-
   /**
    * assure la liasion
    *
@@ -128,10 +36,47 @@ class Interpreter {
    * @return  {void}         classe les séances dans this.seances
    */
   addToCategory(seance){
-    const noshow = seance.realise === "StudentAbsent" ? " no show" : "";
-    const categorie = seance.financement+" | niveau "+seance.niveau+ noshow;
+    const noshow      = seance.realise === "StudentAbsent" ? " no show" : "";
+    const type        = seance.type === "Soutenance" ? "soutenance" : seance.financement;
+    const categorie   = type+" | niveau "+seance.niveau+ noshow;
     if (this.seances[categorie] === undefined) this.seances[categorie] = [];
     this.seances[categorie].push(seance);
+  }
+
+  /**
+   * [addToCategoryAutomaticInvoice description]
+   *
+   * @param   {seance}  seance    [seance description]
+   * @param   {String}  intitule  [intitule description]
+   *
+   * @return  {void}              add element to automaticInvoice 
+   */
+  addToCategoryAutomaticInvoice(seance, intitule){
+    if ( ! this.automaticInvoice[intitule] ) this.automaticInvoice[intitule] = [];
+    this.automaticInvoice[intitule].push(seance);
+  }
+
+  ajouteJourTravaille(seance) {
+    const jour = seance.split(",")[0];
+    if (this.joursTravailles.indexOf(jour) === -1) this.joursTravailles.push(jour);
+  }
+
+  /**
+   * [automaticInvoiceSessionTitle description]
+   *
+   * @param   {seance}  seance  [seance description]
+   *
+   * @return  {String}          [return description]
+   */
+  automaticInvoiceSessionTitle(seance){
+    const financement   = seance.financement === "Financé par un tiers" ? "financed" : "self-paid";
+    const realisation   = seance.realise === "Completed" ? "completed" : "no-show";
+    const type          = seance.type === "Mentorat" ? "standard" : "defense";
+    return `Session mentorat - Expertise ${seance.niveau} - ${financement} - ${type} - ${realisation}`;
+  }
+
+  calculSalaire(montant) {
+    return montant - Math.round((montant * this.tarification.tauxCotisation));
   }
 
   /**
@@ -143,18 +88,25 @@ class Interpreter {
    * @throw   {Error}
    */
   async definirFinancement(seance){
-    if (seance.type === "Soutenance") {
-      this.soutenances++;
-      seance.financement = "Soutenance";
-      return;
-    }
     try {
-      seance.financement = await this.statutEleve(seance.eleve, seance.link);
-      delete seance.link;
+      seance.financement = await this.statutEleveMentore(seance.eleve, seance.link);
+      // delete seance.link;
     }
     catch (err){
       throw err;
     }
+  }
+
+  defineCategoryAutomaticInvoice(seance){
+    let intitule = "defensesUnknownFunding";
+    if (seance.type === "Mentorat") {
+      intitule = this.automaticInvoiceSessionTitle(seance);
+    }
+    //si c'est une soutenance d'un élève dont on connait le financement
+    // if (seance.type !== "Mentorat" && this.eleves[seance.eleve]){
+    //   intitule = this.automaticInvoiceSessionTitle(seance);
+    // }
+    this.addToCategoryAutomaticInvoice(seance,intitule);
   }
 
   /**
@@ -177,43 +129,52 @@ class Interpreter {
     this.total += seance.tarif;
   }
 
-  calculSalaire(montant) {
-    return montant - Math.round((montant * this.tarification.tauxCotisation));
+  exportAutomaticInvoice(){
+    for (const [key, value] of Object.entries(this.automaticInvoice)) {
+      console.log(`....${key} : moi ${value.length} | OC ?`);
+      value.forEach(session => {
+        console.log(`${session.date} - ${session.eleve} (${session.link})`);
+      });
+    }
+  }
+
+  getOpenedDays(year, month, dayNumber) {
+    let tmp;
+    let joursOuvres = 0;
+    for (let i = 0; i < dayNumber; i++) {
+      tmp = new Date(year, month, i).getDay();
+      if (tmp < 5) joursOuvres++;
+    }
+    return joursOuvres;
+  }
+
+  async interpretsSessions(seances) {
+    for (const seance of seances) {
+      if (!seance.realise) return;
+      if (seance.realise === "Canceled") continue;
+      this.nSeances++;
+      this.ajouteJourTravaille(seance.date);
+      if (seance.type === "Soutenance") {
+        this.soutenances++;
+        seance.financement = "Financé par un tiers";
+      }
+      else await this.definirFinancement(seance);
+      this.temps += seance.financement === "Auto-financé" ? 0.5 : 1;
+      this.definirTarif(seance);
+      this.addToCategory(seance);
+      this.defineCategoryAutomaticInvoice(seance);
+    }
   }
 
   /**
-   * [statutEleve description]
+   * [pluriel description]
    *
-   * @param   {String}  eleve  [eleve description]
+   * @param   {Number}  qty  [qty description]
    *
-   * @return  {Promise.<eleveFinancement>}         [return description]
-   * @throw   {Error}
+   * @return  {String}       [return description]
    */
-  async statutEleve(eleve, link) {
-    if (this.eleves[eleve] === undefined) {
-      try {
-        const ref             = ui.addMessage("récupère le financement d" + this.apostrophe(eleve) + eleve, true);
-        this.eleves[eleve]    = await extractor.extractStudentFunding(link);
-
-        if (this.eleves[eleve] === "Auto-financé" || this.eleves[eleve] === "Financé par un tiers") {
-          extractor.update(this.eleves);
-          ui.taskFinished(ref, true);
-        }
-        else {
-          this.manuallyDefineFunding.push(eleve);
-          ui.taskFinished(ref, false);
-        }
-      }
-      catch (err) {
-        throw err;
-      }
-    }
-    return this.eleves[eleve];
-  }
-
-  ajouteJourTravaille(seance) {
-    const jour = seance.split(",")[0];
-    if (this.joursTravailles.indexOf(jour) === -1) this.joursTravailles.push(jour);
+  pluriel(qty){
+    return qty > 1 ? "s" : "";
   }
 
   previsionnelSalaire() {
@@ -237,13 +198,112 @@ class Interpreter {
     ui.addMessage(`salaire prévisionnel : ${this.calculSalaire(prev).toFixed(2)} €`);
   }
 
-  getOpenedDays(year, month, dayNumber) {
-    let tmp;
-    let joursOuvres = 0;
-    for (let i = 0; i < dayNumber; i++) {
-      tmp = new Date(year, month, i).getDay();
-      if (tmp < 5) joursOuvres++;
+  async readData() {
+    this.reset();
+    const releve = {
+      eleves  : JSON.parse(localStorage.getItem("eleves")),
+      seances : extractor.data
+    };
+    this.eleves = releve.eleves === null ? {} : releve.eleves;
+    try {
+      await this.interpretsSessions(releve.seances);
+      if (this.manuallyDefineFunding.length > 0) {
+        ui.clear();
+        this.manuallyDefineFunding.forEach(eleve => {
+          ui.addMessage(`${eleve} : <select id="${eleve}"><option value="Auto-financé">Auto-financé</option><option value="Financé par un tiers">Financé par un tiers</option></select>`);
+        });
+        ui.addMessage("<button onclick=\"extractor.getManualFundings()\">je valide les changements</button>");
+        return;
+      }
+      this.elevesAutofinances   = [...new Set(this.elevesAutofinances)];
+      this.forfaits             = this.elevesAutofinances.length;
+      this.montantForfait       = this.forfaits*this.tarification.forfait;
+      this.temps                += this.forfaits;
+      this.showResults();
     }
-    return joursOuvres;
+    catch (err) {
+      ui.addMessage("<i>erreur : </i>" + err.stack);
+    }
+  }
+
+  reset(){
+    this.automaticInvoice         = {};
+    this.eleves                   = {};
+    this.elevesAutofinances       = [];
+    this.forfaits                 = 0;
+    this.joursTravailles          = [];
+    this.manuallyDefineFunding    = [];
+    this.nSeances                 = 0;
+    this.noShows                  = 0;
+    this.seances                  = {};
+    this.soutenances              = 0;
+    this.temps                    = 0;
+    this.total                    = 0;
+  }
+
+  async showAutomaticInvoiceFormat(){
+    ui.clear();
+    ui.addMessage("recherche le financement des soutenances");
+    let intitule;
+    for (const seance of this.automaticInvoice.defensesUnknownFunding) {
+      const ref          = ui.addMessage("récupère le financement d" + this.apostrophe(seance.eleve) + seance.eleve, true);
+      seance.financement = this.eleves[seance.eleve] ? this.eleves[seance.eleve]: await extractor.extractStudentFunding(seance.link);
+      ui.taskFinished(ref, true);
+      intitule = this.automaticInvoiceSessionTitle(seance);
+      this.addToCategoryAutomaticInvoice(seance,intitule);
+    }
+    delete this.automaticInvoice.defensesUnknownFunding;
+    ui.clear();
+    ui.addMessage(`<span>${this.forfaits}</span> x Flat fees`);
+    ui.showOrderedResults(this.automaticInvoice);
+  }
+
+  showResults(){
+    const chiffreAffaire    = this.total+this.montantForfait;
+    const seancesPlanifiees = extractor.data.length;
+    let pluriel             = this.pluriel(seancesPlanifiees);
+    ui.clear();
+    ui.addMessage(`<span>${seancesPlanifiees}</span> x seance${pluriel} planififée${pluriel}<br>. . . . . . . . . . . . . . . . . . .`);
+    ui.showOrderedResults(this.seances);
+    pluriel = this.pluriel(this.nSeances);
+    ui.addMessage(`<span>${this.nSeances}</span> séance${pluriel} facturée${pluriel} dont ${this.noShows} no show${this.pluriel(this.noShows)} : ${this.total} €HT`);
+    pluriel = this.pluriel(this.forfaits);
+    ui.addMessage(`<span>${this.forfaits}</span> x forfait${pluriel} auto-financé : ${this.montantForfait} €HT`);
+    ui.addMessage(`temps passé : ${this.temps} heure${this.pluriel(this.temps)}`);
+    ui.addMessage("taux horaire "+ Math.round((chiffreAffaire) / this.temps * 100) / 100+ " €HT");
+    ui.addMessage("facturation : "+ chiffreAffaire + " €HT");
+    ui.addMessage("salaire : "+ this.calculSalaire(chiffreAffaire) + "€");
+    this.previsionnelSalaire();
+    ui.addMessage("<button onclick=\"interpreter.showAutomaticInvoiceFormat()\">affichage format facture automatique</button>");
+  }
+
+  /**
+   * [statutEleveMentore description]
+   *
+   * @param   {String}  eleve  [eleve description]
+   *
+   * @return  {Promise.<eleveFinancement>}         [return description]
+   * @throw   {Error}
+   */
+  async statutEleveMentore(eleve, link) {
+    if (this.eleves[eleve] === undefined) {
+      try {
+        const ref             = ui.addMessage("récupère le financement d" + this.apostrophe(eleve) + eleve, true);
+        this.eleves[eleve]    = await extractor.extractStudentFunding(link);
+
+        if (this.eleves[eleve] === "Auto-financé" || this.eleves[eleve] === "Financé par un tiers") {
+          extractor.update(this.eleves);
+          ui.taskFinished(ref, true);
+        }
+        else {
+          this.manuallyDefineFunding.push(eleve);
+          ui.taskFinished(ref, false);
+        }
+      }
+      catch (err) {
+        throw err;
+      }
+    }
+    return this.eleves[eleve];
   }
 }

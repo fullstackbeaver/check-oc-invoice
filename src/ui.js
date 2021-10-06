@@ -104,4 +104,16 @@ class UI {
   taskFinished(ref, succeed){
     ref.dataset.content = succeed ? "✔" : "X";
   }
+
+  showOrderedResults(seances) {
+    const prestations = [];
+    for (const key of Object.keys(seances)) {
+      prestations.push(key);
+    }
+    prestations.sort();
+    console.log(prestations);
+    prestations.forEach(presta => {
+      this.addMessage(`<span>${seances[presta].length}</span> x ${presta}`);
+    });
+  }
 }

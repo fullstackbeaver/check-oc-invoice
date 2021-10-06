@@ -45,6 +45,7 @@ class Extractor {
     const list = document.querySelectorAll(this.domSrc);
     let newLine;
     for (let i = this.currentItem, size = list.length; i < size; i++) {
+      console.log(i)
       // @ts-ignore
       if (list[i].innerText.length <= 20) {
         this.state++;
@@ -62,12 +63,11 @@ class Extractor {
         }
       }
       if (this.state === 1) {
-        this.currentItem = i;
+        this.currentItem = i+1;
         // @ts-ignore
         newLine = this.newLine(list[i]);
         if (newLine) this.data.push(newLine);
       }
-
     }
     const btns = document.querySelectorAll(this.seeMoreBtn);
     const seeMoreBtn = btns[btns.length - 1];
@@ -97,6 +97,10 @@ class Extractor {
     } catch (error) {
       throw error;
     }
+  }
+
+  getManualFundings(){ //TODO: faire la fonction
+    alert("fonction extractor.getManualFundings() à coder");
   }
 
   /**
