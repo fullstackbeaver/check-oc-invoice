@@ -1,1 +1,1 @@
-var extractor = new Extractor("#mainContent section li", "#mainContent button");
+var extractor = new Extractor("#mainContent section li", "#mainContent button.webapp-0-MuiButton-text");

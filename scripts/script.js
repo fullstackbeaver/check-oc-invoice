@@ -13,7 +13,6 @@ class Extractor {
     this.lastEntry          = 0;
     this.mutationObserver   = new MutationObserver(this.extractData.bind(this));
     this.seeMoreBtn         = seeMoreBtn;
-    this.seeMoreBtn;
     this.skipNextTitle;
     this.state = 0;
   }
@@ -105,7 +104,7 @@ class Extractor {
     localStorage.setItem("eleves", JSON.stringify(eleves));
   }
 }
-var extractor = new Extractor("#mainContent section li", "#mainContent button");
+var extractor = new Extractor("#mainContent section li", "#mainContent button.webapp-0-MuiButton-text");
 
 class UI {
 

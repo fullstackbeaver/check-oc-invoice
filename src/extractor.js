@@ -18,7 +18,6 @@ class Extractor {
     this.lastEntry          = 0;
     this.mutationObserver   = new MutationObserver(this.extractData.bind(this));
     this.seeMoreBtn         = seeMoreBtn;
-    this.seeMoreBtn;
     this.skipNextTitle;
     /**
      * l'étape d'extraction
