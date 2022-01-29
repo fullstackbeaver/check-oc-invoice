@@ -30,6 +30,7 @@ class Extractor {
   extractData() {
     window.scrollTo(0, document.body.scrollHeight);
     const list = document.querySelectorAll(this.domSrc);
+    if (list.length === 0) return;
     let newLine;
     for (let i = this.currentItem, size = list.length; i < size; i++) {
       if (list[i].innerText.length <= 20) {
@@ -179,7 +180,6 @@ class UI {
       prestations.push(key);
     }
     prestations.sort();
-    console.log(prestations);
     prestations.forEach(presta => {
       this.addMessage(`<span>${seances[presta].length}</span> x ${presta}`);
     });

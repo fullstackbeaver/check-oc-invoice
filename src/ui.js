@@ -111,7 +111,6 @@ class UI {
       prestations.push(key);
     }
     prestations.sort();
-    console.log(prestations);
     prestations.forEach(presta => {
       this.addMessage(`<span>${seances[presta].length}</span> x ${presta}`);
     });

@@ -42,6 +42,7 @@ class Extractor {
   extractData() {
     window.scrollTo(0, document.body.scrollHeight);
     const list = document.querySelectorAll(this.domSrc);
+    if (list.length === 0) return;
     let newLine;
     for (let i = this.currentItem, size = list.length; i < size; i++) {
       // @ts-ignore
