@@ -1,3 +1,4 @@
 if (extractor) {
-  delete extractor, interpreter, ui, Extractor, Interpreter, UI;
+  window.location.reload();
+  // delete extractor, interpreter, ui, Extractor, Interpreter, UI;
 }

@@ -89,7 +89,7 @@ class UI {
    */
   launch(previous) {
     this.clear();
-    if (!extractor.checkPage()) return;
+    // if (!extractor.checkPage()) return;
     extractor.startSearch(previous);
   }
 

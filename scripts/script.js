@@ -1,102 +1,89 @@
 if (extractor) {
-  delete extractor, interpreter, ui, Extractor, Interpreter, UI;
+  window.location.reload();
 }
 
 
 
 class Extractor {
 
-  constructor(domSrc, seeMoreBtn) {
-    this.data               = [];
-    this.domSrc             = domSrc;
-    this.firstEntry         = 0;
-    this.lastEntry          = 0;
-    this.mutationObserver   = new MutationObserver(this.extractData.bind(this));
-    this.seeMoreBtn         = seeMoreBtn;
-    this.skipNextTitle;
-    this.state = 0;
+  constructor() {
+    this.data = [];
+    this.state   = 0;
+    this.userId  = localStorage.getItem("ajs_user_id").slice(1,-1);
+    this.headers = {
+      headers: new Headers({
+        "Authorization": "Bearer "+localStorage.getItem("7xPFDY3bB3ruX44z__oc-sdk-access-token")
+      }),
+    };
+    this.resquestedMonth=null;
   }
 
-  checkPage() {
-    const lang = window.location.pathname.slice(0, 3);
-    const target = "/mentorship/dashboard/mentorship-sessions-history";
-    if (window.location.pathname.slice(3) !== target) {
-      ui.addMessage(`<a href="${lang + target}"><h1>ce n'est pas la bonne page</h1>aller à la page historique</a>`);
-      return false;
+  async extractData(last) {
+    if (last === undefined){
+      last = {
+        date   : new Date(Date.now()).toISOString().slice(0,10), 
+        heure  : "23",
+        minutes: "59",
+      };
     }
-    return true;
-  }
-
-  extractData() {
-    window.scrollTo(0, document.body.scrollHeight);
-    const list = document.querySelectorAll(this.domSrc);
-    if (list.length === 0) return;
-    let newLine;
-    for (let i = this.currentItem, size = list.length; i < size; i++) {
-      if (list[i].innerText.length <= 20) {
+    const data = await this.fetcher(last);
+    for (const entry of data){
+      const mois = new Date(entry.sessionDate).getMonth();
+      if (this.state === 0){
+        if (mois !== this.resquestedMonth) continue;
         this.state++;
-        if (this.state === 2) {
-          this.mutationObserver.disconnect();
-          const pluriel = interpreter.pluriel(this.data.length);
-          ui.clear();
-          ui.addMessage(`l'extraction achevée : ${this.data.length} seance${pluriel} planififée${pluriel}`);
-          interpreter.readData();
-          return;
-        }
-        if (this.state === 1) {
-          ui.addMessage("l'extraction commence");
-          continue;
-        }
+        ui.addMessage("l'extraction commence");
+        this.addEntry(entry);
+        continue;
       }
-      if (this.state === 1) {
-        this.currentItem = i+1;
-        newLine = this.newLine(list[i]);
-        if (newLine) this.data.push(newLine);
+      if (this.state === 1){
+        if (mois !== this.resquestedMonth) return this.extractionEnd();
+        this.addEntry(entry);
       }
     }
-    const btns = document.querySelectorAll(this.seeMoreBtn);
-    const seeMoreBtn = btns[btns.length - 1];
-    if (seeMoreBtn !== undefined) {
-      ui.addMessage("nouvelle requête pour avoir plus de séances");
-      seeMoreBtn.click();
-    }
+    const start  = new Date(data[data.length - 1].sessionDate);
+    last = {
+      date   : start.toISOString().slice(0,10), 
+      heure  : this.ajusteFormatDate(start.getHours()),
+      minutes: this.ajusteFormatDate(start.getMinutes()),
+    };
+    ui.addMessage("nouvelle requête pour avoir plus de séances");
+    this.extractData(last);
   }
 
-  async extractStudentFunding(src) {
+  async extractStudentFunding(id) {
     try {
-      const data  = await fetch(src);
-      let funding = await data.text();
-      const start = funding.indexOf("mentorshipStudent__details");
-      funding = funding.slice(start, start + 100);
-      funding = funding.slice(funding.indexOf("<p>") + 4, funding.indexOf("</p>") - 1);
-      funding = funding.replace(/\n/g, "").trim();
-      return funding;
+      const ref     = "isFinancialAidStudent";
+      const data    = await fetch(`https://openclassrooms.com/fr/mentorship/students/${id}/dashboard`);
+      const page    = await data.text();
+      const funding = page[page.indexOf(ref)+ref.length+3];
+      switch (funding){
+        case "f"    : return "Auto-financé";
+        case "t"    : return "Financé par un tiers";
+        default: return null;
+      }
     } catch (error) {
+      console.error("error",error);
       throw error;
     }
   }
 
   getManualFundings(){ 
-    alert("fonction extractor.getManualFundings() à coder");
-  }
-
-  newLine(node) {
-    const list = node.querySelectorAll("div");
-    return {
-      date    : list[3].innerText,
-      eleve   : list[4].innerText,
-      link    : list[4].querySelector("a").href,
-      niveau  : list[8] ? parseInt(list[8].innerText) : null,
-      realise : list[0].querySelector("svg").getAttribute("data-name").slice(0, -4),
-      type    : list[0].innerText
-    };
+    const resume = document.querySelector("resume");
+    const list   = resume.querySelectorAll("select");
+    list.forEach(elm => {
+      console.log(elm.id, elm.value);
+      interpreter.eleves[elm.id] = elm.value;
+    });
+    this.update(interpreter.eleves);
+    alert("les données ont été enregistrées mais fonction (extractor.getManualFundings) à finir");
   }
 
   startSearch(previous) {
-    this.currentItem = 1;
-    this.skipNextTitle = previous;
-    this.state = previous ? 0 : 1;
-    this.mutationObserver.observe(document.querySelector("#mainContent"), { childList: true, subtree: true });
+    this.currentItem   = 1;
+    this.state         = 0;
+    this.resquestedMonth = new Date(Date.now()).getMonth();
+    if (previous) this.resquestedMonth--;
     ui.addMessage("recherche du début du mois sélectionné");
     this.extractData();
   }
@@ -104,8 +91,46 @@ class Extractor {
   update(eleves) {
     localStorage.setItem("eleves", JSON.stringify(eleves));
   }
+
+  async fetcher(props){
+    const url = `https://api.openclassrooms.com/users/${this.userId}/sessions?actor=expert&before=${props.date}T${props.heure}%3A${props.minutes}%3A00Z&life-cycle-status=canceled%2Ccompleted%2Clate%20canceled%2Cmarked%20student%20as%20absent&sort=sessionDate%20DESC`;
+    try {
+      const response = await fetch(url, this.headers);
+      const answer= await response.json();
+      return answer;
+    }
+    catch (err){
+      console.error(err);
+    }
+  }
+
+  ajusteFormatDate(valeur){
+    if (valeur >= 10) return valeur.toString();
+    return "0"+valeur;
+  }
+
+  addEntry(entry){
+    const ref = this.data[this.data.length-1];
+    if (ref !== undefined && ref.date === entry.sessionDate && ref.eleve === entry.recipient.displayableName && ref.realise === entry.status) return;
+    this.data.push({
+      date    : entry.sessionDate,
+      eleve   : entry.recipient.displayableName,
+      id      : entry.recipient.id,
+      niveau  : parseInt(entry.projectLevel),
+      realise : entry.status,
+      type    : entry.type
+    });
+  }
+
+  extractionEnd(){
+    this.state++;
+    const pluriel = interpreter.pluriel(this.data.length);
+    ui.clear();
+    ui.addMessage(`l'extraction achevée : ${this.data.length} seance${pluriel} planififée${pluriel}`);
+    interpreter.readData();
+  }
 }
-var extractor = new Extractor("#mainContent section li", ".MuiButton-root");
+var extractor = new Extractor();
 
 class UI {
 
@@ -166,7 +191,6 @@ class UI {
 
   launch(previous) {
     this.clear();
-    if (!extractor.checkPage()) return;
     extractor.startSearch(previous);
   }
 
@@ -201,8 +225,8 @@ class Interpreter {
   }
 
   addToCategory(seance){
-    const noshow      = seance.realise === "StudentAbsent" ? " no show" : "";
-    const type        = seance.type === "Soutenance" ? "soutenance" : seance.financement;
+    const noshow      = seance.realise === "marked student as absent" ? " no show" : "";
+    const type        = seance.type === "presentation" ? "soutenance" : seance.financement;
     const categorie   = type+" | niveau "+seance.niveau+ noshow;
     if (this.seances[categorie] === undefined) this.seances[categorie] = [];
     this.seances[categorie].push(seance);
@@ -221,21 +245,12 @@ class Interpreter {
   automaticInvoiceSessionTitle(seance){
     const financement   = seance.financement === "Financé par un tiers" ? "financed" : "self-paid";
     const realisation   = seance.realise === "Completed" ? "completed" : "no-show";
-    const type          = seance.type === "Mentorat" ? "standard" : "defense";
+    const type          = seance.type === "Mentoring" ? "standard" : "defense";
     return `Session mentorat - Expertise ${seance.niveau} - ${financement} - ${type} - ${realisation}`;
   }
 
   calculSalaire(montant) {
     return montant - Math.round((montant * this.tarification.tauxCotisation));
-  }
-
-  async definirFinancement(seance){
-    try {
-      seance.financement = await this.statutEleveMentore(seance.eleve, seance.link);
-    }
-    catch (err){
-      throw err;
-    }
   }
 
   defineCategoryAutomaticInvoice(seance){
@@ -252,7 +267,7 @@ class Interpreter {
       this.elevesAutofinances.push(seance.eleve);
       seance.tarif = seance.tarif / 2;
     }
-    if (seance.realise === "StudentAbsent") {
+    if (seance.realise === "marked student as absent") {
       seance.tarif = seance.tarif / 2;
       this.noShows++;
     }
@@ -284,11 +299,11 @@ class Interpreter {
       if (seance.realise === "Canceled") continue;
       this.nSeances++;
       this.ajouteJourTravaille(seance.date);
-      if (seance.type === "Soutenance") {
+      if (seance.type === "presentation") {
         this.soutenances++;
         seance.financement = "Financé par un tiers";
       }
-      else await this.definirFinancement(seance);
+      else await this.statutEleveMentore(seance.eleve, seance.id);
       this.temps += seance.financement === "Auto-financé" ? 0.5 : 1;
       this.definirTarif(seance);
       this.addToCategory(seance);
@@ -400,24 +415,17 @@ class Interpreter {
     ui.addMessage("<button onclick=\"interpreter.showAutomaticInvoiceFormat()\">affichage format facture automatique</button>");
   }
 
-  async statutEleveMentore(eleve, link) {
-    if (this.eleves[eleve] === undefined) {
-      try {
-        const ref             = ui.addMessage("récupère le financement d" + this.apostrophe(eleve) + eleve, true);
-        this.eleves[eleve]    = await extractor.extractStudentFunding(link);
-
-        if (this.eleves[eleve] === "Auto-financé" || this.eleves[eleve] === "Financé par un tiers") {
-          extractor.update(this.eleves);
-          ui.taskFinished(ref, true);
-        }
-        else {
-          this.manuallyDefineFunding.push(eleve);
-          ui.taskFinished(ref, false);
-        }
-      }
-      catch (err) {
-        throw err;
-      }
+  async statutEleveMentore(eleve, id) {
+    if (this.eleves[eleve]) return this.eleves[eleve]; 
+    const ref             = ui.addMessage("récupère le financement d" + this.apostrophe(eleve) + eleve, true);
+    this.eleves[eleve]    = await extractor.extractStudentFunding(id);
+    if (this.eleves[eleve] === "Auto-financé" || this.eleves[eleve] === "Financé par un tiers") {
+      extractor.update(this.eleves);
+      ui.taskFinished(ref, true);
+    }
+    else {
+      this.manuallyDefineFunding.push(eleve);
+      ui.taskFinished(ref, false);
     }
     return this.eleves[eleve];
   }

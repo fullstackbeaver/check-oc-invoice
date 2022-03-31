@@ -36,8 +36,8 @@ class Interpreter {
    * @return  {void}         classe les séances dans this.seances
    */
   addToCategory(seance){
-    const noshow      = seance.realise === "StudentAbsent" ? " no show" : "";
-    const type        = seance.type === "Soutenance" ? "soutenance" : seance.financement;
+    const noshow      = seance.realise === "marked student as absent" ? " no show" : "";
+    const type        = seance.type === "presentation" ? "soutenance" : seance.financement;
     const categorie   = type+" | niveau "+seance.niveau+ noshow;
     if (this.seances[categorie] === undefined) this.seances[categorie] = [];
     this.seances[categorie].push(seance);
@@ -49,7 +49,7 @@ class Interpreter {
    * @param   {seance}  seance    [seance description]
    * @param   {String}  intitule  [intitule description]
    *
-   * @return  {void}              add element to automaticInvoice 
+   * @return  {void}              add element to automaticInvoice
    */
   addToCategoryAutomaticInvoice(seance, intitule){
     if ( ! this.automaticInvoice[intitule] ) this.automaticInvoice[intitule] = [];
@@ -71,30 +71,12 @@ class Interpreter {
   automaticInvoiceSessionTitle(seance){
     const financement   = seance.financement === "Financé par un tiers" ? "financed" : "self-paid";
     const realisation   = seance.realise === "Completed" ? "completed" : "no-show";
-    const type          = seance.type === "Mentorat" ? "standard" : "defense";
+    const type          = seance.type === "Mentoring" ? "standard" : "defense";
     return `Session mentorat - Expertise ${seance.niveau} - ${financement} - ${type} - ${realisation}`;
   }
 
   calculSalaire(montant) {
     return montant - Math.round((montant * this.tarification.tauxCotisation));
-  }
-
-  /**
-   * ajoute le tarif de la séance
-   *
-   * @param   {seance}  seance  [seance description]
-   *
-   * @return  {Promise.<void>}            complète les informations de la séance
-   * @throw   {Error}
-   */
-  async definirFinancement(seance){
-    try {
-      seance.financement = await this.statutEleveMentore(seance.eleve, seance.link);
-      // delete seance.link;
-    }
-    catch (err){
-      throw err;
-    }
   }
 
   defineCategoryAutomaticInvoice(seance){
@@ -122,7 +104,7 @@ class Interpreter {
       this.elevesAutofinances.push(seance.eleve);
       seance.tarif = seance.tarif / 2;
     }
-    if (seance.realise === "StudentAbsent") {
+    if (seance.realise === "marked student as absent") {
       seance.tarif = seance.tarif / 2;
       this.noShows++;
     }
@@ -154,11 +136,12 @@ class Interpreter {
       if (seance.realise === "Canceled") continue;
       this.nSeances++;
       this.ajouteJourTravaille(seance.date);
-      if (seance.type === "Soutenance") {
+      // console.log("seance.type:",seance.type);
+      if (seance.type === "presentation") {
         this.soutenances++;
         seance.financement = "Financé par un tiers";
       }
-      else await this.definirFinancement(seance);
+      else await this.statutEleveMentore(seance.eleve, seance.id);
       this.temps += seance.financement === "Auto-financé" ? 0.5 : 1;
       this.definirTarif(seance);
       this.addToCategory(seance);
@@ -285,24 +268,18 @@ class Interpreter {
    * @return  {Promise.<eleveFinancement>}         [return description]
    * @throw   {Error}
    */
-  async statutEleveMentore(eleve, link) {
-    if (this.eleves[eleve] === undefined) {
-      try {
-        const ref             = ui.addMessage("récupère le financement d" + this.apostrophe(eleve) + eleve, true);
-        this.eleves[eleve]    = await extractor.extractStudentFunding(link);
-
-        if (this.eleves[eleve] === "Auto-financé" || this.eleves[eleve] === "Financé par un tiers") {
-          extractor.update(this.eleves);
-          ui.taskFinished(ref, true);
-        }
-        else {
-          this.manuallyDefineFunding.push(eleve);
-          ui.taskFinished(ref, false);
-        }
-      }
-      catch (err) {
-        throw err;
-      }
+  async statutEleveMentore(eleve, id) {
+    if (this.eleves[eleve]) return this.eleves[eleve]; //TODO regarder pourquoi ça va chercher quand même si l'étudiant vient d'être récupéré
+    const ref             = ui.addMessage("récupère le financement d" + this.apostrophe(eleve) + eleve, true);
+    this.eleves[eleve]    = await extractor.extractStudentFunding(id);
+    // console.log(eleve, "id:",id,this.eleves[eleve]);
+    if (this.eleves[eleve] === "Auto-financé" || this.eleves[eleve] === "Financé par un tiers") {
+      extractor.update(this.eleves);
+      ui.taskFinished(ref, true);
+    }
+    else {
+      this.manuallyDefineFunding.push(eleve);
+      ui.taskFinished(ref, false);
     }
     return this.eleves[eleve];
   }

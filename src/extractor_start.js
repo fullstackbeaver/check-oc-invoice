@@ -1,1 +1,1 @@
-var extractor = new Extractor("#mainContent section li", ".MuiButton-root");
+var extractor = new Extractor();
