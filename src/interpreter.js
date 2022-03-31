@@ -57,7 +57,7 @@ class Interpreter {
   }
 
   ajouteJourTravaille(seance) {
-    const jour = seance.split(",")[0];
+    const jour = new Date(seance).getDate();
     if (this.joursTravailles.indexOf(jour) === -1) this.joursTravailles.push(jour);
   }
 
@@ -113,7 +113,7 @@ class Interpreter {
 
   exportAutomaticInvoice(){
     for (const [key, value] of Object.entries(this.automaticInvoice)) {
-      console.log(`....${key} : moi ${value.length} | OC ?`);
+      // console.log(`....${key} : moi ${value.length} | OC ?`);
       value.forEach(session => {
         console.log(`${session.date} - ${session.eleve} (${session.link})`);
       });
@@ -132,16 +132,16 @@ class Interpreter {
 
   async interpretsSessions(seances) {
     for (const seance of seances) {
+      // console.log("seances:",seances);
       if (!seance.realise) return;
       if (seance.realise === "Canceled") continue;
       this.nSeances++;
       this.ajouteJourTravaille(seance.date);
-      // console.log("seance.type:",seance.type);
       if (seance.type === "presentation") {
         this.soutenances++;
         seance.financement = "Financé par un tiers";
       }
-      else await this.statutEleveMentore(seance.eleve, seance.id);
+      else seance.financement = await this.statutEleveMentore(seance.eleve, seance.id);
       this.temps += seance.financement === "Auto-financé" ? 0.5 : 1;
       this.definirTarif(seance);
       this.addToCategory(seance);
@@ -165,10 +165,11 @@ class Interpreter {
     const annee   = new Date().getFullYear();
     const idMois  = new Date().getMonth();
     const moisTxt = new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(new Date());
-    const refDate = this.joursTravailles[this.joursTravailles.length - 1];
+    // console.log("this.joursTravailles:",this.joursTravailles);
+    // const refDate = this.joursTravailles[this.joursTravailles.length - 1];
 
-    if (refDate.indexOf(moisTxt) === -1) return;
-    if (parseInt(refDate.split(" ")[2]) !== annee) return;
+    // if (refDate.indexOf(moisTxt) === -1) return;
+    // if (parseInt(refDate.split(" ")[2]) !== annee) return;
 
     const joursDansLeMois         = new Date(idMois, annee, 0).getDate();
     const joursOuvres             = this.getOpenedDays(annee, idMois, joursDansLeMois);
@@ -230,7 +231,7 @@ class Interpreter {
     let intitule;
     for (const seance of this.automaticInvoice.defensesUnknownFunding) {
       const ref          = ui.addMessage("récupère le financement d" + this.apostrophe(seance.eleve) + seance.eleve, true);
-      seance.financement = this.eleves[seance.eleve] ? this.eleves[seance.eleve]: await extractor.extractStudentFunding(seance.link);
+      seance.financement = this.eleves[seance.eleve] ? this.eleves[seance.eleve]: await extractor.extractStudentFunding(seance.id);
       ui.taskFinished(ref, true);
       intitule = this.automaticInvoiceSessionTitle(seance);
       this.addToCategoryAutomaticInvoice(seance,intitule);
@@ -272,7 +273,6 @@ class Interpreter {
     if (this.eleves[eleve]) return this.eleves[eleve]; //TODO regarder pourquoi ça va chercher quand même si l'étudiant vient d'être récupéré
     const ref             = ui.addMessage("récupère le financement d" + this.apostrophe(eleve) + eleve, true);
     this.eleves[eleve]    = await extractor.extractStudentFunding(id);
-    // console.log(eleve, "id:",id,this.eleves[eleve]);
     if (this.eleves[eleve] === "Auto-financé" || this.eleves[eleve] === "Financé par un tiers") {
       extractor.update(this.eleves);
       ui.taskFinished(ref, true);
