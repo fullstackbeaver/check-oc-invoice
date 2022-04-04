@@ -316,9 +316,11 @@ class Interpreter {
 
   previsionnelSalaire() {
 
-    const annee   = new Date().getFullYear();
     const idMois  = new Date().getMonth();
-    const moisTxt = new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(new Date());
+    console.log("idMois:",idMois, extractor.resquestedMonth);
+    if (idMois !== extractor.resquestedMonth) return;
+
+    const annee   = new Date().getFullYear();
 
 
     const joursDansLeMois         = new Date(idMois, annee, 0).getDate();
