@@ -24,6 +24,7 @@ class Extractor {
       }),
     };
     this.resquestedMonth=null;
+    this.extractsRef = [];
   }
 
   /**
@@ -154,8 +155,9 @@ class Extractor {
   }
 
   addEntry(entry){
-    const ref = this.data[this.data.length-1];
-    if (ref !== undefined && ref.date === entry.sessionDate && ref.eleve === entry.recipient.displayableName && ref.realise === entry.status) return;
+    const ref = entry.sessionDate+"_"+entry.recipient.displayableName+"_"+entry.status;
+    if (this.extractsRef.indexOf(ref) !== -1) return;
+    this.extractsRef.push(ref);
     this.data.push({
       date    : entry.sessionDate,
       eleve   : entry.recipient.displayableName,

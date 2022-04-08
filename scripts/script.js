@@ -16,6 +16,7 @@ class Extractor {
       }),
     };
     this.resquestedMonth=null;
+    this.extractsRef = [];
   }
 
   async extractData(last) {
@@ -110,8 +111,9 @@ class Extractor {
   }
 
   addEntry(entry){
-    const ref = this.data[this.data.length-1];
-    if (ref !== undefined && ref.date === entry.sessionDate && ref.eleve === entry.recipient.displayableName && ref.realise === entry.status) return;
+    const ref = entry.sessionDate+"_"+entry.recipient.displayableName+"_"+entry.status;
+    if (this.extractsRef.indexOf(ref) !== -1) return;
+    this.extractsRef.push(ref);
     this.data.push({
       date    : entry.sessionDate,
       eleve   : entry.recipient.displayableName,
@@ -295,7 +297,7 @@ class Interpreter {
   async interpretsSessions(seances) {
     for (const seance of seances) {
       if (!seance.realise) return;
-      if (seance.realise === "Canceled") continue;
+      if (seance.realise === "canceled") continue;
       this.nSeances++;
       this.ajouteJourTravaille(seance.date);
       if (seance.type === "presentation") {

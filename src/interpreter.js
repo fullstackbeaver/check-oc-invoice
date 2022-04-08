@@ -134,7 +134,7 @@ class Interpreter {
     for (const seance of seances) {
       // console.log("seances:",seances);
       if (!seance.realise) return;
-      if (seance.realise === "Canceled") continue;
+      if (seance.realise === "canceled") continue;
       this.nSeances++;
       this.ajouteJourTravaille(seance.date);
       if (seance.type === "presentation") {
