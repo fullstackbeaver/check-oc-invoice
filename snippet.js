@@ -7,7 +7,7 @@ const settings = {
     niveau1: 30,                    // montant en € d'une séance de niveau 1
     niveau2: 35,                    // montant en € d'une séance de niveau 2
     niveau3: 40,                    // montant en € d'une séance de niveau 3
-    tauxCotisation: .264,           // ce taux correspond à celui d'un autoentrepreneur avec le prélèvement libératoire (26,4%)
+    tauxCotisation: .246,           // ce taux correspond à celui d'un autoentrepreneur avec le prélèvement libératoire (26,4%)
   }
 };
 const src = settings.local ?
